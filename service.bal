@@ -1,7 +1,6 @@
 import ballerina/http;
 import ballerinax/mysql;
 import ballerinax/mysql.driver as _;
-import ballerina/time;
 
 type Office record
 {
@@ -31,12 +30,6 @@ type LecturerCourse record
     string courseCode;
 };
 
-type ErrorDetails record {
-    string message;
-    string details;
-    time:Utc timeStamp;
-};
-
 final mysql:Client db = check new (
     host = "first-instance.cg4vktva35w7.eu-north-1.rds.amazonaws.com",
     user = "learning", password = "learning-db",
@@ -45,18 +38,30 @@ final mysql:Client db = check new (
 );
 
 isolated service /api on new http:Listener(9090) {
-    resource isolated function post staff(Staff staff) returns http:Created|error
+    resource isolated function post staff(Staff staff) returns Staff|error
     {
-        _ = check db->execute(`INSERT INTO Staff(staffNumber, officeNumber, staffName, title)
+        do
+        {
+            _ = check db->execute(`INSERT INTO Staff(staffNumber, officeNumber, staffName, title)
              VALUES (${staff.staffNumber}, ${staff.officeNumber}, ${staff.staffName}, ${staff.title})`);
-        return http:CREATED;
+        }
+        on fail var e {
+            return error(e.message());
+        }
+        return staff;
     }
-    resource isolated function post office(Office office) returns http:Created|error
-    {
-        _ = check db->execute(`INSERT INTO Office(officeNumber, location, capacity)
-             VALUES (${office.officeNumber}, ${office.location}, ${office.capacity})`);
 
-        return http:CREATED;
+    resource isolated function post office(Office office) returns Office|error
+    {
+        do
+        {
+            _ = check db->execute(`INSERT INTO Office(officeNumber, location, capacity)
+             VALUES (${office.officeNumber}, ${office.location}, ${office.capacity})`);
+        }
+        on fail var e {
+            return error(e.message());
+        }
+        return office;
     }
 
     resource isolated function post course(Courses course) returns Courses|error
@@ -71,6 +76,20 @@ isolated service /api on new http:Listener(9090) {
             return error(e.message());
         }
         return course;
+    }
+
+    resource isolated function post courselecture(LecturerCourse lc) returns LecturerCourse|error
+    {
+        do
+        {
+            _ = check db->execute(`INSERT INTO Lecturer_Course(staffNumber, courseCode)
+            VALUES (${lc.staffNumber}, ${lc.courseCode})`);
+        }
+        on fail var e
+        {
+            return error(e.message());
+        }
+        return lc;
     }
 
 }
