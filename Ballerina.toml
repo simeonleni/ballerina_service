@@ -1,0 +1,13 @@
+[package]
+distribution = "2201.7.2"
+name = "aws"
+org = "simeon"
+version = "0.1.0"
+
+[build-options]
+observabilityIncluded = true
+
+[[platform.java11.dependency]]
+artifactId = "mysql-connector-java"
+groupId = "mysql"
+version = "8.0.26"
